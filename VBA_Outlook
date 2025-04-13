@@ -1,0 +1,618 @@
+___________________________
+
+Deepseek
+
+Sub CompterEmailsParCategorie()
+    Dim olApp As Outlook.Application
+    Dim olNs As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItem As Object
+    Dim dictCategories As Object
+    Dim categoryName As String
+    Dim totalItems As Long
+    Dim processedItems As Long
+    Dim key As Variant
+    Dim result As String
+
+    ' Initialisation
+    Set olApp = Outlook.Application
+    Set olNs = olApp.GetNamespace("MAPI")
+    Set dictCategories = CreateObject("Scripting.Dictionary")
+
+    ' Sélectionner le dossier à analyser
+    On Error Resume Next
+    Set olFolder = olNs.PickFolder
+    On Error GoTo 0
+
+    If olFolder Is Nothing Then
+        MsgBox "Aucun dossier sélectionné. Opération annulée.", vbExclamation
+        Exit Sub
+    End If
+
+    totalItems = olFolder.Items.Count
+    processedItems = 0
+
+    ' Parcourir tous les éléments du dossier
+    For Each olItem In olFolder.Items
+        processedItems = processedItems + 1
+        If processedItems Mod 100 = 0 Then
+            Application.StatusBar = "Traitement en cours: " & processedItems & " / " & totalItems & " emails analysés..."
+            DoEvents
+        End If
+
+        ' Vérifier si l'élément est un mail
+        If TypeName(olItem) = "MailItem" Then
+            ' Récupérer les catégories de l'email
+            categoryName = olItem.Categories
+            If categoryName = "" Then categoryName = "Aucune catégorie"
+
+            ' Compter par catégorie
+            If dictCategories.Exists(categoryName) Then
+                dictCategories(categoryName) = dictCategories(categoryName) + 1
+            Else
+                dictCategories.Add categoryName, 1
+            End If
+        End If
+    Next olItem
+
+    ' Afficher les résultats
+    result = "Résultats pour le dossier '" & olFolder.Name & "':" & vbCrLf & vbCrLf
+    result = result & "Total d'emails analysés: " & totalItems & vbCrLf & vbCrLf
+
+    ' Trier les catégories par ordre alphabétique
+    Dim sortedKeys() As Variant
+    Dim i As Long, j As Long
+    Dim temp As Variant
+
+    ReDim sortedKeys(dictCategories.Count - 1)
+    i = 0
+    For Each key In dictCategories.Keys
+        sortedKeys(i) = key
+        i = i + 1
+    Next
+
+    ' Tri bulle simple (pour un petit nombre de catégories)
+    For i = LBound(sortedKeys) To UBound(sortedKeys) - 1
+        For j = i + 1 To UBound(sortedKeys)
+            If sortedKeys(i) > sortedKeys(j) Then
+                temp = sortedKeys(i)
+                sortedKeys(i) = sortedKeys(j)
+                sortedKeys(j) = temp
+            End If
+        Next j
+    Next i
+
+    ' Ajouter les résultats triés
+    For i = LBound(sortedKeys) To UBound(sortedKeys)
+        result = result & sortedKeys(i) & ": " & dictCategories(sortedKeys(i)) & vbCrLf
+    Next
+
+    MsgBox result, vbInformation, "Statistiques par catégorie"
+
+    ' Nettoyer
+    Application.StatusBar = ""
+    Set dictCategories = Nothing
+    Set olItem = Nothing
+    Set olFolder = Nothing
+    Set olNs = Nothing
+    Set olApp = Nothing
+End Sub
+
+
+***
+Et sans la fonction de tri
+
+
+
+Sub CompterEmailsParCategorieSimple()
+    Dim olApp As Outlook.Application
+    Dim olNs As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItem As Object
+    Dim dictCategories As Object
+    Dim categoryName As String
+    Dim totalItems As Long
+    Dim processedItems As Long
+    Dim key As Variant
+    Dim result As String
+
+    ' Initialisation
+    Set olApp = Outlook.Application
+    Set olNs = olApp.GetNamespace("MAPI")
+    Set dictCategories = CreateObject("Scripting.Dictionary")
+
+    ' Sélectionner le dossier à analyser
+    On Error Resume Next
+    Set olFolder = olNs.PickFolder
+    On Error GoTo 0
+
+    If olFolder Is Nothing Then
+        MsgBox "Aucun dossier sélectionné. Opération annulée.", vbExclamation
+        Exit Sub
+    End If
+
+    totalItems = olFolder.Items.Count
+    processedItems = 0
+
+    ' Parcourir tous les éléments du dossier
+    For Each olItem In olFolder.Items
+        processedItems = processedItems + 1
+        If processedItems Mod 100 = 0 Then
+            Application.StatusBar = "Traitement en cours: " & processedItems & " / " & totalItems & " emails analysés..."
+            DoEvents
+        End If
+
+        ' Vérifier si l'élément est un mail
+        If TypeName(olItem) = "MailItem" Then
+            ' Récupérer les catégories de l'email
+            categoryName = olItem.Categories
+            If categoryName = "" Then categoryName = "Aucune catégorie"
+
+            ' Compter par catégorie
+            If dictCategories.Exists(categoryName) Then
+                dictCategories(categoryName) = dictCategories(categoryName) + 1
+            Else
+                dictCategories.Add categoryName, 1
+            End If
+        End If
+    Next olItem
+
+    ' Afficher les résultats
+    result = "Résultats pour le dossier '" & olFolder.Name & "':" & vbCrLf & vbCrLf
+    result = result & "Total d'emails analysés: " & totalItems & vbCrLf & vbCrLf
+
+    ' Ajouter les résultats sans tri
+    For Each key In dictCategories.Keys
+        result = result & key & ": " & dictCategories(key) & vbCrLf
+    Next
+
+    MsgBox result, vbInformation, "Statistiques par catégorie"
+
+    ' Nettoyer
+    Application.StatusBar = ""
+    Set dictCategories = Nothing
+    Set olItem = Nothing
+    Set olFolder = Nothing
+    Set olNs = Nothing
+    Set olApp = Nothing
+End Sub
+
+
+***
+Avec filtre de date et export Excel
+
+
+Sub CompterEtExporterEmailsParCategorie()
+    Dim olApp As Outlook.Application
+    Dim olNs As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItem As Object
+    Dim dictCategories As Object
+    Dim categoryName As String
+    Dim totalItems As Long
+    Dim processedItems As Long
+    Dim key As Variant
+    Dim result As String
+    Dim startDate As Date
+    Dim endDate As Date
+    Dim xlApp As Object
+    Dim xlWB As Object
+    Dim xlWS As Object
+    Dim rowIndex As Integer
+
+    ' Demander la période à analyser
+    startDate = InputBox("Entrez la date de début (jj/mm/aaaa):", "Période d'analyse", Date - 30)
+    If startDate = 0 Then Exit Sub ' Annulation
+
+    endDate = InputBox("Entrez la date de fin (jj/mm/aaaa):", "Période d'analyse", Date)
+    If endDate = 0 Then Exit Sub ' Annulation
+
+    ' Ajuster la date de fin pour inclure toute la journée
+    endDate = endDate + 1 - 0.0000001
+
+    ' Initialisation
+    Set olApp = Outlook.Application
+    Set olNs = olApp.GetNamespace("MAPI")
+    Set dictCategories = CreateObject("Scripting.Dictionary")
+
+    ' Sélectionner le dossier à analyser
+    On Error Resume Next
+    Set olFolder = olNs.PickFolder
+    On Error GoTo 0
+
+    If olFolder Is Nothing Then
+        MsgBox "Aucun dossier sélectionné. Opération annulée.", vbExclamation
+        Exit Sub
+    End If
+
+    totalItems = olFolder.Items.Count
+    processedItems = 0
+
+    ' Parcourir tous les éléments du dossier
+    For Each olItem In olFolder.Items
+        processedItems = processedItems + 1
+        If processedItems Mod 100 = 0 Then
+            Application.StatusBar = "Traitement en cours: " & processedItems & " / " & totalItems & " emails analysés..."
+            DoEvents
+        End If
+
+        ' Vérifier si l'élément est un mail et dans la période
+        If TypeName(olItem) = "MailItem" Then
+            If olItem.ReceivedTime >= startDate And olItem.ReceivedTime <= endDate Then
+                ' Récupérer les catégories de l'email
+                categoryName = olItem.Categories
+                If categoryName = "" Then categoryName = "Aucune catégorie"
+
+                ' Compter par catégorie
+                If dictCategories.Exists(categoryName) Then
+                    dictCategories(categoryName) = dictCategories(categoryName) + 1
+                Else
+                    dictCategories.Add categoryName, 1
+                End If
+            End If
+        End If
+    Next olItem
+
+    ' Créer une nouvelle application Excel
+    On Error Resume Next
+    Set xlApp = GetObject(, "Excel.Application")
+    If Err.Number <> 0 Then
+        Set xlApp = CreateObject("Excel.Application")
+    End If
+    On Error GoTo 0
+
+    Set xlWB = xlApp.Workbooks.Add
+    Set xlWS = xlWB.Worksheets(1)
+    xlApp.Visible = True
+
+    ' Configurer la feuille Excel
+    With xlWS
+        .Name = "Stats Catégories"
+        .Range("A1").Value = "Statistiques des emails par catégorie"
+        .Range("A1").Font.Bold = True
+        .Range("A1").Font.Size = 14
+
+        .Range("A3").Value = "Dossier analysé:"
+        .Range("B3").Value = olFolder.Name
+
+        .Range("A4").Value = "Période analysée:"
+        .Range("B4").Value = Format(startDate, "dd/mm/yyyy") & " au " & Format(endDate - 1, "dd/mm/yyyy")
+
+        .Range("A6").Value = "Catégorie"
+        .Range("B6").Value = "Nombre d'emails"
+        .Range("A6:B6").Font.Bold = True
+
+        ' Ajouter les données
+        rowIndex = 7
+        For Each key In dictCategories.Keys
+            .Cells(rowIndex, 1).Value = key
+            .Cells(rowIndex, 2).Value = dictCategories(key)
+            rowIndex = rowIndex + 1
+        Next key
+
+        ' Mise en forme
+        .Columns("A:B").AutoFit
+        .Range("A6:B" & rowIndex - 1).Borders.LineStyle = 1
+        .Range("A6:B6").Interior.Color = RGB(200, 200, 200)
+    End With
+
+    ' Ajouter un graphique
+    Dim chart As Object
+    Set chart = xlWS.Shapes.AddChart2(201, xlColumnClustered, Left:=300, Top:=100, Width:=400, Height:=300).Chart
+
+    With chart
+        .SetSourceData Source:=xlWS.Range("A6:B" & rowIndex - 1)
+        .ChartTitle.Text = "Répartition des emails par catégorie"
+        .Axes(1).TickLabels.Orientation = 45 ' Rotation des étiquettes
+    End With
+
+    ' Afficher un message de confirmation
+    MsgBox "Export terminé avec " & dictCategories.Count & " catégories trouvées." & vbCrLf & _
+           "Les résultats ont été exportés vers Excel.", vbInformation
+
+    ' Nettoyer
+    Application.StatusBar = ""
+    Set dictCategories = Nothing
+    Set olItem = Nothing
+    Set olFolder = Nothing
+    Set olNs = Nothing
+    Set olApp = Nothing
+    Set xlWS = Nothing
+    Set xlWB = Nothing
+    Set xlApp = Nothing
+End Sub
+
+
+
+
+
+
+
+___________________________
+
+ChatGPT
+
+Sub CompterMailsParCategorie()
+    Dim olApp As Outlook.Application
+    Dim olNamespace As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItems As Outlook.Items
+    Dim olMail As Outlook.MailItem
+    Dim categoriesDict As Object
+    Dim item As Object
+    Dim catArray() As String
+    Dim cat As Variant
+    Dim key As Variant
+    Dim message As String
+
+    ' Initialisation
+    Set olApp = Outlook.Application
+    Set olNamespace = olApp.GetNamespace("MAPI")
+    Set olFolder = olNamespace.GetDefaultFolder(olFolderInbox) ' Boîte de réception
+    Set olItems = olFolder.Items
+    Set categoriesDict = CreateObject("Scripting.Dictionary")
+
+    ' Parcours des e-mails
+    For Each item In olItems
+        If TypeOf item Is Outlook.MailItem Then
+            Set olMail = item
+            If olMail.Categories <> "" Then
+                catArray = Split(olMail.Categories, ",")
+                For Each cat In catArray
+                    cat = Trim(cat)
+                    If categoriesDict.exists(cat) Then
+                        categoriesDict(cat) = categoriesDict(cat) + 1
+                    Else
+                        categoriesDict.Add cat, 1
+                    End If
+                Next cat
+            End If
+        End If
+    Next item
+
+    ' Affichage des résultats
+    message = "Nombre de mails par catégorie :" & vbCrLf & vbCrLf
+    For Each key In categoriesDict.keys
+        message = message & key & " : " & categoriesDict(key) & vbCrLf
+    Next key
+
+    MsgBox message, vbInformation, "Statistiques des Catégories"
+End Sub
+
+
+***
+Pareil dans une boite partagée :
+
+
+Sub CompterMailsParCategorieBoitePartagee()
+    Dim olApp As Outlook.Application
+    Dim olNamespace As Outlook.Namespace
+    Dim olSharedMailbox As Outlook.Recipient
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItems As Outlook.Items
+    Dim olMail As Outlook.MailItem
+    Dim categoriesDict As Object
+    Dim item As Object
+    Dim catArray() As String
+    Dim cat As Variant
+    Dim key As Variant
+    Dim message As String
+    Dim sharedMailboxName As String
+
+    ' === À personnaliser ===
+    sharedMailboxName = "nom_boite_partagee@domaine.com" ' ← remplace ceci par le nom de la boîte
+
+    ' Initialisation
+    Set olApp = Outlook.Application
+    Set olNamespace = olApp.GetNamespace("MAPI")
+    Set olSharedMailbox = olNamespace.CreateRecipient(sharedMailboxName)
+    olSharedMailbox.Resolve
+
+    If Not olSharedMailbox.Resolved Then
+        MsgBox "Impossible de trouver la boîte partagée : " & sharedMailboxName, vbCritical
+        Exit Sub
+    End If
+
+    ' Accéder à la boîte de réception de la boîte partagée
+    Set olFolder = olNamespace.GetSharedDefaultFolder(olSharedMailbox, olFolderInbox)
+    Set olItems = olFolder.Items
+    Set categoriesDict = CreateObject("Scripting.Dictionary")
+
+    ' Parcours des e-mails
+    For Each item In olItems
+        If TypeOf item Is Outlook.MailItem Then
+            Set olMail = item
+            If olMail.Categories <> "" Then
+                catArray = Split(olMail.Categories, ",")
+                For Each cat In catArray
+                    cat = Trim(cat)
+                    If categoriesDict.exists(cat) Then
+                        categoriesDict(cat) = categoriesDict(cat) + 1
+                    Else
+                        categoriesDict.Add cat, 1
+                    End If
+                Next cat
+            End If
+        End If
+    Next item
+
+    ' Affichage des résultats
+    message = "Nombre de mails par catégorie dans la boîte partagée :" & vbCrLf & vbCrLf
+    For Each key In categoriesDict.Keys
+        message = message & key & " : " & categoriesDict(key) & vbCrLf
+    Next key
+
+    MsgBox message, vbInformation, "Statistiques des Catégories"
+End Sub
+
+
+
+***
+Avec filtre de date et export Excel
+
+
+Sub CompterEtExporterCategoriesBoitePartagee()
+    Dim olApp As Outlook.Application
+    Dim olNamespace As Outlook.Namespace
+    Dim olSharedMailbox As Outlook.Recipient
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olItems As Outlook.Items
+    Dim olMail As Outlook.MailItem
+    Dim categoriesDict As Object
+    Dim item As Object
+    Dim catArray() As String
+    Dim cat As Variant
+    Dim key As Variant
+    Dim dateLimite As Date
+    Dim sharedMailboxName As String
+
+    ' === À personnaliser ===
+    sharedMailboxName = "nom_boite_partagee@domaine.com" ' ← à remplacer par le nom réel
+    dateLimite = Date - 30  ' ← nombre de jours en arrière (ici, 30 jours)
+
+    ' Initialisation Outlook
+    Set olApp = Outlook.Application
+    Set olNamespace = olApp.GetNamespace("MAPI")
+    Set olSharedMailbox = olNamespace.CreateRecipient(sharedMailboxName)
+    olSharedMailbox.Resolve
+
+    If Not olSharedMailbox.Resolved Then
+        MsgBox "Impossible de résoudre la boîte : " & sharedMailboxName, vbCritical
+        Exit Sub
+    End If
+
+    Set olFolder = olNamespace.GetSharedDefaultFolder(olSharedMailbox, olFolderInbox)
+    Set olItems = olFolder.Items
+    olItems.Sort "[ReceivedTime]", False ' Tri décroissant
+    Set categoriesDict = CreateObject("Scripting.Dictionary")
+
+    ' Parcours et filtrage des e-mails
+    For Each item In olItems
+        If TypeOf item Is Outlook.MailItem Then
+            Set olMail = item
+            If olMail.ReceivedTime >= dateLimite Then
+                If olMail.Categories <> "" Then
+                    catArray = Split(olMail.Categories, ",")
+                    For Each cat In catArray
+                        cat = Trim(cat)
+                        If categoriesDict.exists(cat) Then
+                            categoriesDict(cat) = categoriesDict(cat) + 1
+                        Else
+                            categoriesDict.Add cat, 1
+                        End If
+                    Next cat
+                End If
+            End If
+        End If
+    Next item
+
+    ' Export vers Excel
+    Call ExporterVersExcel(categoriesDict, sharedMailboxName, dateLimite)
+
+    MsgBox "Export terminé avec succès.", vbInformation
+End Sub
+
+' === Procédure pour créer et remplir un fichier Excel ===
+Sub ExporterVersExcel(dict As Object, boite As String, dateMin As Date)
+    Dim xlApp As Object
+    Dim xlWB As Object
+    Dim xlSheet As Object
+    Dim i As Integer
+    Dim key As Variant
+
+    ' Création Excel
+    Set xlApp = CreateObject("Excel.Application")
+    Set xlWB = xlApp.Workbooks.Add
+    Set xlSheet = xlWB.Sheets(1)
+
+    ' En-têtes
+    xlSheet.Cells(1, 1).Value = "Catégorie"
+    xlSheet.Cells(1, 2).Value = "Nombre de mails"
+    xlSheet.Cells(1, 3).Value = "Période depuis"
+    xlSheet.Cells(2, 3).Value = Format(dateMin, "dd/mm/yyyy")
+    xlSheet.Cells(3, 3).Value = "Boîte : " & boite
+
+    ' Données
+    i = 2
+    For Each key In dict.Keys
+        xlSheet.Cells(i, 1).Value = key
+        xlSheet.Cells(i, 2).Value = dict(key)
+        i = i + 1
+    Next key
+
+    ' Mise en forme
+    xlSheet.Columns("A:B").AutoFit
+    xlApp.Visible = True
+End Sub
+
+
+***
+Avec export Excel dans un dossier local
+
+
+
+Sub ExporterVersExcel(dict As Object, boite As String, dateMin As Date)
+    Dim xlApp As Object
+    Dim xlWB As Object
+    Dim xlSheet As Object
+    Dim i As Integer
+    Dim key As Variant
+    Dim dossierExport As String
+    Dim nomFichier As String
+    Dim fs As Object
+
+    ' === À personnaliser ===
+    dossierExport = "C:\RapportsOutlook\"  ' ← Le dossier de destination
+
+    ' Vérifier que le dossier existe, sinon le créer
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    If Not fs.FolderExists(dossierExport) Then
+        fs.CreateFolder dossierExport
+    End If
+
+    ' Générer un nom de fichier unique
+    nomFichier = "Stats_Categories_" & Replace(boite, "@", "_") & "_" & Format(Date, "yyyymmdd") & ".xlsx"
+
+    ' Créer Excel et remplir les données
+    Set xlApp = CreateObject("Excel.Application")
+    Set xlWB = xlApp.Workbooks.Add
+    Set xlSheet = xlWB.Sheets(1)
+
+    ' En-têtes
+    xlSheet.Cells(1, 1).Value = "Catégorie"
+    xlSheet.Cells(1, 2).Value = "Nombre de mails"
+    xlSheet.Cells(1, 3).Value = "Période depuis"
+    xlSheet.Cells(2, 3).Value = Format(dateMin, "dd/mm/yyyy")
+    xlSheet.Cells(3, 3).Value = "Boîte : " & boite
+
+    ' Données
+    i = 2
+    For Each key In dict.Keys
+        xlSheet.Cells(i, 1).Value = key
+        xlSheet.Cells(i, 2).Value = dict(key)
+        i = i + 1
+    Next key
+
+    ' Mise en forme
+    xlSheet.Columns("A:B").AutoFit
+
+    ' Enregistrer dans le dossier défini
+    xlWB.SaveAs dossierExport & nomFichier
+    xlWB.Close False
+    xlApp.Quit
+
+    ' Nettoyage
+    Set xlSheet = Nothing
+    Set xlWB = Nothing
+    Set xlApp = Nothing
+
+    MsgBox "Fichier Excel exporté avec succès vers :" & vbCrLf & dossierExport & nomFichier, vbInformation
+End Sub
+
+
+
+
+
+
+
+

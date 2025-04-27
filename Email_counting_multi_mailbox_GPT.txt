@@ -1,0 +1,206 @@
+chatGPT
+
+
+__________________________
+
+
+
+Sub CompterEmailsDansBoites()
+    Dim outlookApp As Outlook.Application
+    Dim ns As Outlook.Namespace
+    Dim boite As Outlook.Folder
+    Dim boiteNames(1 To 4) As String
+    Dim i As Integer
+    Dim totalMails As Long
+    Dim unreadMails As Long
+
+    ' 💡 Mets ici les noms EXACTS des boîtes aux lettres
+    boiteNames(1) = "Boite 1"
+    boiteNames(2) = "Boite 2"
+    boiteNames(3) = "Boite 3"
+    boiteNames(4) = "Boite 4"
+
+    Set outlookApp = Outlook.Application
+    Set ns = outlookApp.GetNamespace("MAPI")
+
+    For i = 1 To 4
+        On Error Resume Next
+        Set boite = ns.Folders(boiteNames(i)).Folders("Boîte de réception")
+        On Error GoTo 0
+
+        If Not boite Is Nothing Then
+            totalMails = boite.Items.Count
+            unreadMails = boite.UnReadItemCount
+            MsgBox "📫 Boîte : " & boiteNames(i) & vbCrLf & _
+                   "Total des mails : " & totalMails & vbCrLf & _
+                   "Non lus : " & unreadMails
+        Else
+            MsgBox "❌ Boîte introuvable : " & boiteNames(i)
+        End If
+    Next i
+End Sub
+
+
+__________________________
+Avec exemples de nom de boites
+
+
+Sub CompterEmailsBoitesReelles()
+    Dim outlookApp As Outlook.Application
+    Dim ns As Outlook.Namespace
+    Dim boite As Outlook.Folder
+    Dim boiteNames(1 To 4) As String
+    Dim i As Integer
+    Dim totalMails As Long
+    Dim unreadMails As Long
+
+    ' 🔁 Remplace ces noms par les vrais noms de tes boîtes principales dans Outlook
+    boiteNames(1) = "Jean Dupont"
+    boiteNames(2) = "Comptabilité"
+    boiteNames(3) = "Support Technique"
+    boiteNames(4) = "contact@entreprise.com"
+
+    Set outlookApp = Outlook.Application
+    Set ns = outlookApp.GetNamespace("MAPI")
+
+    For i = 1 To 4
+        On Error Resume Next
+        ' 📥 Accès à la boîte de réception de chaque boîte
+        Set boite = ns.Folders(boiteNames(i)).Folders("Boîte de réception")
+        On Error GoTo 0
+
+        If Not boite Is Nothing Then
+            totalMails = boite.Items.Count
+            unreadMails = boite.UnReadItemCount
+            MsgBox "📫 Boîte : " & boiteNames(i) & vbCrLf & _
+                   "Total des mails : " & totalMails & vbCrLf & _
+                   "Non lus : " & unreadMails
+        Else
+            MsgBox "❌ Boîte introuvable : " & boiteNames(i)
+        End If
+    Next i
+End Sub
+
+
+
+___________________________
+Scroll subfolders with 'CAR' in the Namespace
+
+Sub CompterMailsDossiersCAR()
+    Dim outlookApp As Outlook.Application
+    Dim ns As Outlook.Namespace
+    Dim rootBoites(1 To 3) As String
+    Dim i As Integer
+    Dim totalEmails As Long
+
+    ' 📝 Mets ici les noms EXACTS des boîtes principales (ceux affichés dans Outlook)
+    rootBoites(1) = "Jean Dupont"
+    rootBoites(2) = "Comptabilité"
+    rootBoites(3) = "support@entreprise.com"
+
+    Set outlookApp = Outlook.Application
+    Set ns = outlookApp.GetNamespace("MAPI")
+
+    totalEmails = 0
+
+    For i = 1 To 3
+        Dim rootFolder As Outlook.Folder
+        Set rootFolder = ns.Folders(rootBoites(i))
+
+        If Not rootFolder Is Nothing Then
+            Dim boiteTotal As Long
+            boiteTotal = ParcourirSousDossiersCAR(rootFolder)
+            MsgBox "📂 Boîte : " & rootBoites(i) & vbCrLf & _
+                   "Mails dans dossiers contenant 'CAR' : " & boiteTotal
+            totalEmails = totalEmails + boiteTotal
+        Else
+            MsgBox "❌ Impossible d'accéder à la boîte : " & rootBoites(i)
+        End If
+    Next i
+
+    MsgBox "📊 Total général dans tous les dossiers 'CAR' : " & totalEmails
+End Sub
+
+Function ParcourirSousDossiersCAR(dossier As Outlook.Folder) As Long
+    Dim sousDossier As Outlook.Folder
+    Dim total As Long
+
+    ' Si le nom contient "CAR" (insensible à la casse), on compte les mails
+    If InStr(1, dossier.Name, "CAR", vbTextCompare) > 0 Then
+        total = dossier.Items.Count
+    End If
+
+    ' Parcours récursif des sous-dossiers
+    For Each sousDossier In dossier.Folders
+        total = total + ParcourirSousDossiersCAR(sousDossier)
+    Next sousDossier
+
+    ParcourirSousDossiersCAR = total
+End Function
+
+
+__________________________
+
+Parcourir des sous-dossiers dans 3 boites outlook :
+
+
+Sub ParcourirDossierSpecifiqueDansBoites()
+    Dim outlookApp As Outlook.Application
+    Dim ns As Outlook.Namespace
+    Dim boiteNames(1 To 3) As String
+    Dim i As Integer
+    Dim dossierCible As String
+    Dim racine As Outlook.Folder
+    Dim dossierParent As Outlook.Folder
+    Dim log As String
+
+    ' 💬 Nom du dossier à chercher dans chaque boîte
+    dossierCible = "PROJETS" ' 🔁 Remplace par le nom du dossier spécifique
+
+    ' 📥 Mets ici les noms exacts des boîtes (comme affiché dans Outlook)
+    boiteNames(1) = "Jean Dupont"
+    boiteNames(2) = "Comptabilité"
+    boiteNames(3) = "support@entreprise.com"
+
+    Set outlookApp = Outlook.Application
+    Set ns = outlookApp.GetNamespace("MAPI")
+
+    log = ""
+
+    For i = 1 To 3
+        Set racine = ns.Folders(boiteNames(i))
+        If Not racine Is Nothing Then
+            On Error Resume Next
+            Set dossierParent = racine.Folders(dossierCible)
+            On Error GoTo 0
+
+            If Not dossierParent Is Nothing Then
+                log = log & "📂 Dossier '" & dossierCible & "' dans boîte : " & boiteNames(i) & vbCrLf
+                log = log & "→ " & dossierParent.Name & vbCrLf
+                Call ExplorerSousDossiers(dossierParent, "    ", log)
+                log = log & vbCrLf
+            Else
+                log = log & "❌ Dossier '" & dossierCible & "' introuvable dans : " & boiteNames(i) & vbCrLf & vbCrLf
+            End If
+        End If
+    Next i
+
+    MsgBox log, vbInformation, "Résultat du parcours"
+End Sub
+
+Sub ExplorerSousDossiers(dossier As Outlook.Folder, prefix As String, ByRef log As String)
+    Dim sousDossier As Outlook.Folder
+
+    For Each sousDossier In dossier.Folders
+        log = log & prefix & "↳ " & sousDossier.Name & vbCrLf
+        ExplorerSousDossiers sousDossier, prefix & "    ", log
+    Next sousDossier
+End Sub
+
+
+
+_______________________
+
+
+
+

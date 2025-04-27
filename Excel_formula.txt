@@ -1,0 +1,35 @@
+
+
+code VBA qui crée un classeur Excel, écrit les nombres de 1 à 10 sur la première colonne et écrit la formule de la somme de ces nombres sur la première colonne à la onzième ligne
+
+
+Sub CreerClasseurEtEcrireNombres()
+    Dim xlApp As Object
+    Dim wb As Object
+    Dim ws As Object
+    Dim i As Integer
+
+    ' ⚙️ Créer une instance d'Excel
+    Set xlApp = CreateObject("Excel.Application")
+    xlApp.Visible = True ' Rends Excel visible (facultatif)
+
+    ' 📗 Créer un nouveau classeur
+    Set wb = xlApp.Workbooks.Add
+    Set ws = wb.Sheets(1)
+
+    ' 🔢 Écrire les nombres de 1 à 10 dans la colonne A
+    For i = 1 To 10
+        ws.Cells(i, 1).Value = i
+    Next i
+
+    ' ➕ Insérer la formule de somme en A11
+    ws.Cells(11, 1).Formula = "=SUM(A1:A10)"
+
+    ' 🧼 Libération mémoire (facultatif ici, mais propre)
+    Set ws = Nothing
+    Set wb = Nothing
+    Set xlApp = Nothing
+End Sub
+
+
+___________________________

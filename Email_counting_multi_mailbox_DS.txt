@@ -1,0 +1,222 @@
+DeepSeek
+
+
+______________
+
+Sub CompterEmailsBoitesSpecifiques()
+    Dim OutlookApp As Outlook.Application
+    Dim Namespace As Outlook.Namespace
+    Dim Folder1 As Outlook.Folder
+    Dim Folder2 As Outlook.Folder
+    Dim Folder3 As Outlook.Folder
+    Dim Folder4 As Outlook.Folder
+    Dim Count1 As Long, Count2 As Long, Count3 As Long, Count4 As Long
+    Dim Result As String
+
+    ' Initialiser Outlook
+    Set OutlookApp = New Outlook.Application
+    Set Namespace = OutlookApp.GetNamespace("MAPI")
+
+    On Error Resume Next ' Gestion des erreurs si les dossiers ne sont pas trouvés
+
+    ' Remplacer ces noms par vos dossiers réels
+    Set Folder1 = Namespace.Folders("VotreCompte").Folders("Boîte de réception").Folders("Sous-dossier1")
+    Set Folder2 = Namespace.Folders("VotreCompte").Folders("Boîte de réception").Folders("Sous-dossier2")
+    Set Folder3 = Namespace.Folders("VotreCompte").Folders("Boîte d'envoi").Folders("Sous-dossier3")
+    Set Folder4 = Namespace.Folders("VotreCompte").Folders("Dossiers publics").Folders("Sous-dossier4")
+
+    ' Compter les emails dans chaque dossier
+    If Not Folder1 Is Nothing Then Count1 = Folder1.Items.Count
+    If Not Folder2 Is Nothing Then Count2 = Folder2.Items.Count
+    If Not Folder3 Is Nothing Then Count3 = Folder3.Items.Count
+    If Not Folder4 Is Nothing Then Count4 = Folder4.Items.Count
+
+    ' Afficher les résultats
+    Result = "Nombre d'e-mails par boîte :" & vbCrLf & vbCrLf & _
+             "Boîte 1: " & Count1 & vbCrLf & _
+             "Boîte 2: " & Count2 & vbCrLf & _
+             "Boîte 3: " & Count3 & vbCrLf & _
+             "Boîte 4: " & Count4
+
+    MsgBox Result, vbInformation, "Statistiques des e-mails"
+
+    ' Nettoyage
+    Set Folder1 = Nothing
+    Set Folder2 = Nothing
+    Set Folder3 = Nothing
+    Set Folder4 = Nothing
+    Set Namespace = Nothing
+    Set OutlookApp = Nothing
+End Sub
+
+
+______________
+Avec exemples de sous-dossiers
+
+
+monadresse@domaine.com
+│
+├── Boîte de réception
+│   ├── Clients           ← Sous-dossier 1
+│   ├── Factures          ← Sous-dossier 2
+│   └── Archivés
+│
+├── Éléments envoyés
+├── Courrier indésirable
+└── Dossiers publics
+    └── Équipe Marketing  ← Sous-dossier 3
+
+Set Folder1 = Namespace.Folders("monadresse@domaine.com").Folders("Boîte de réception").Folders("Clients")
+Set Folder2 = Namespace.Folders("monadresse@domaine.com").Folders("Boîte de réception").Folders("Factures")
+Set Folder3 = Namespace.Folders("monadresse@domaine.com").Folders("Éléments envoyés").Folders("Important")
+Set Folder4 = Namespace.Folders("monadresse@domaine.com").Folders("Dossiers publics").Folders("Équipe Marketing")
+
+
+
+Version complète (et avec vérification des dossiers)
+
+Sub CompterEmailsExempleConcret()
+    Dim OutlookApp As Outlook.Application
+    Dim Namespace As Outlook.Namespace
+    Dim Compte As Outlook.Folder
+    Dim i As Integer
+    Dim Dossiers(1 To 4) As String
+    Dim Counts(1 To 4) As Long
+    Dim Result As String
+
+    ' Noms des dossiers à modifier ici
+    Dossiers(1) = "Boîte de réception\Clients"      ' Format: "DossierParent\SousDossier"
+    Dossiers(2) = "Boîte de réception\Factures"
+    Dossiers(3) = "Éléments envoyés\Important"
+    Dossiers(4) = "Dossiers publics\Équipe Marketing"
+
+    Set OutlookApp = New Outlook.Application
+    Set Namespace = OutlookApp.GetNamespace("MAPI")
+    Set Compte = Namespace.Folders("monadresse@domaine.com")  ' ← À adapter !
+
+    For i = 1 To 4
+        Counts(i) = CompterDansDossier(Compte, Dossiers(i))
+    Next i
+
+    Result = "Résultats :" & vbCrLf & vbCrLf & _
+             "1. " & Dossiers(1) & ": " & Counts(1) & vbCrLf & _
+             "2. " & Dossiers(2) & ": " & Counts(2) & vbCrLf & _
+             "3. " & Dossiers(3) & ": " & Counts(3) & vbCrLf & _
+             "4. " & Dossiers(4) & ": " & Counts(4)
+
+    MsgBox Result, vbInformation, "Statistiques"
+End Sub
+
+Function CompterDansDossier(Compte As Outlook.Folder, Chemin As String) As Long
+    Dim Dossiers() As String
+    Dim CurrentFolder As Outlook.Folder
+    Dim i As Integer
+
+    Dossiers = Split(Chemin, "\")
+    Set CurrentFolder = Compte
+
+    On Error Resume Next
+    For i = 0 To UBound(Dossiers)
+        Set CurrentFolder = CurrentFolder.Folders(Dossiers(i))
+        If CurrentFolder Is Nothing Then Exit For
+    Next i
+
+    If Not CurrentFolder Is Nothing Then
+        CompterDansDossier = CurrentFolder.Items.Count
+    Else
+        CompterDansDossier = 0
+    End If
+End Function
+
+
+___________________
+
+
+Sub ParcourirDossiersEtCompterEmails()
+    Dim OutlookApp As Outlook.Application
+    Dim Namespace As Outlook.Namespace
+    Dim Compte As Outlook.Folder
+    Dim FeuilleExcel As Excel.Worksheet
+    Dim WorkbookExcel As Excel.Workbook
+    Dim Ligne As Integer
+    Dim DossierParent1 As Outlook.Folder, DossierParent2 As Outlook.Folder, DossierParent3 As Outlook.Folder
+    Dim Boites As Variant
+    Dim i As Integer
+
+    ' Initialiser Outlook
+    Set OutlookApp = New Outlook.Application
+    Set Namespace = OutlookApp.GetNamespace("MAPI")
+
+    ' Créer un nouveau classeur Excel
+    Set WorkbookExcel = Excel.Application.Workbooks.Add
+    Set FeuilleExcel = WorkbookExcel.Sheets(1)
+    FeuilleExcel.Name = "Statistiques Emails"
+
+    ' En-têtes Excel
+    FeuilleExcel.Range("A1").Value = "Boîte Outlook"
+    FeuilleExcel.Range("B1").Value = "Chemin du Dossier"
+    FeuilleExcel.Range("C1").Value = "Nombre d'Emails"
+    Ligne = 2 ' Commencer à la ligne 2
+
+    ' ===== MODIFIER ICI =====
+    ' Noms des 3 boîtes Outlook et dossiers parents cibles
+    Boites = Array(
+        "Boîte 1\DossierParent1",  ' Ex: "monadresse@domaine.com\Boîte de réception\Projets"
+        "Boîte 2\DossierParent2",  ' Ex: "monadresse@domaine.com\Éléments envoyés\Clients"
+        "Boîte 3\DossierParent3"   ' Ex: "monadresse@domaine.com\Dossiers publics\Marketing"
+    )
+    ' ========================
+
+    ' Parcourir chaque boîte
+    For i = LBound(Boites) To UBound(Boites)
+        Dim Parties() As String
+        Parties = Split(Boites(i), "\")
+
+        ' Accéder au dossier parent
+        On Error Resume Next
+        Set Compte = Namespace.Folders(Parties(0))
+        If Not Compte Is Nothing Then
+            Set DossierParent = Compte
+            For j = 1 To UBound(Parties)
+                Set DossierParent = DossierParent.Folders(Parties(j))
+                If DossierParent Is Nothing Then Exit For
+            Next j
+
+            ' Si le dossier existe, parcourir récursivement
+            If Not DossierParent Is Nothing Then
+                Call ParcourirSousDossiers(DossierParent, FeuilleExcel, Ligne, Boites(i))
+            End If
+        End If
+        On Error GoTo 0
+    Next i
+
+    ' Ajuster les colonnes Excel
+    FeuilleExcel.Columns("A:C").AutoFit
+    MsgBox "Terminé ! Les résultats sont exportés dans Excel.", vbInformation
+End Sub
+
+' ===== FONCTION RÉCURSIVE =====
+Sub ParcourirSousDossiers(Dossier As Outlook.Folder, Feuille As Excel.Worksheet, ByRef Ligne As Integer, CheminBoite As String)
+    Dim SousDossier As Outlook.Folder
+    Dim NbEmails As Long
+
+    ' Compter les emails dans le dossier actuel
+    NbEmails = Dossier.Items.Count
+    Feuille.Cells(Ligne, 1).Value = Split(CheminBoite, "\")(0) ' Boîte
+    Feuille.Cells(Ligne, 2).Value = CheminBoite & "\" & Dossier.Name ' Chemin complet
+    Feuille.Cells(Ligne, 3).Value = NbEmails
+    Ligne = Ligne + 1
+
+    ' Parcourir les sous-dossiers
+    For Each SousDossier In Dossier.Folders
+        Call ParcourirSousDossiers(SousDossier, Feuille, Ligne, CheminBoite & "\" & Dossier.Name)
+    Next SousDossier
+End Sub
+
+
+
+_________________________
+
+
+
+

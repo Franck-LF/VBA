@@ -1,0 +1,423 @@
+DS
+
+pip install spacy
+python -m spacy download fr_core_news_md
+
+import spacy
+
+# Charger le modèle linguistique
+nlp = spacy.load("fr_core_news_md")
+
+def anonymize_text(text):
+    doc = nlp(text)
+    anonymized_text = text
+    replacements = []
+
+    # Parcourir les entités nommées
+    for ent in doc.ents:
+        if ent.label_ in ["PER", "LOC", "ORG", "DATE", "MISC"]:
+            # Stocker les positions et longueurs des entités à remplacer
+            replacements.append((ent.start_char, ent.end_char, ent.label_))
+
+    # Remplacer dans l'ordre inverse pour éviter les problèmes d'index
+    for start, end, label in sorted(replacements, reverse=True):
+        anonymized_text = anonymized_text[:start] + f"[{label}]" + anonymized_text[end:]
+
+    return anonymized_text
+
+# Exemple d'utilisation
+text = "Jean Dupont habite au 12 rue de la Paix à Paris et travaille pour Google."
+print(anonymize_text(text))
+
+def anonymize_advanced(text):
+    doc = nlp(text)
+    replacements = []
+
+    for ent in doc.ents:
+        if ent.label_ == "PER":
+            replacement = "[NOM]"
+        elif ent.label_ == "LOC":
+            replacement = "[LIEU]"
+        elif ent.label_ == "DATE":
+            replacement = "[DATE]"
+        elif ent.label_ == "ORG":
+            replacement = "[ORGANISATION]"
+        else:
+            replacement = f"[{ent.label_}]"
+
+        replacements.append((ent.start_char, ent.end_char, replacement))
+
+    anonymized_text = text
+    for start, end, replacement in sorted(replacements, reverse=True):
+        anonymized_text = anonymized_text[:start] + replacement + anonymized_text[end:]
+
+    return anonymized_text
+
+ import re
+
+def anonymize_with_regex(text):
+    # Anonymiser les entités nommées d'abord
+    doc = nlp(text)
+    anonymized = text
+
+    # Remplacer les numéros de téléphone
+    anonymized = re.sub(r'\b(\d{2}[\s.-]?){4}\d{2}\b', '[TEL]', anonymized)
+
+    # Remplacer les adresses email
+    anonymized = re.sub(r'\b[\w.-]+@[\w.-]+\.\w+\b', '[EMAIL]', anonymized)
+
+    return anonymized
+
+from presidio_analyzer import AnalyzerEngine
+from presidio_anonymizer import AnonymizerEngine
+
+analyzer = AnalyzerEngine()
+anonymizer = AnonymizerEngine()
+
+def anonymize_with_presidio(text):
+    results = analyzer.analyze(text=text, language="fr")
+    anonymized = anonymizer.anonymize(text=text, analyzer_results=results)
+    return anonymized.text
+
+
+GPT
+
+def anonymiser(doc, labels_sensibles=["PER", "LOC", "ORG", "DATE"]):
+    tokens = []
+    for token in doc:
+        if token.ent_type_ in labels_sensibles:
+            tokens.append(f"[{token.ent_type_}]")
+        else:
+            tokens.append(token.text)
+    return " ".join(tokens)
+
+texte_anonymise = anonymiser(doc)
+print(texte_anonymise)
+
+___________________________________________
+Adresses
+
+
+GPT
+
+import spacy
+
+nlp = spacy.load("fr_core_news_md")
+
+texte = "Son adresse est 17 rue Victor Hugo, 75003 Paris."
+
+doc = nlp(texte)
+for ent in doc.ents:
+    print(ent.text, ent.label_)
+
+import re
+
+def detect_adresses_regex(text):
+    pattern = r"\b\d{1,4}\s(rue|avenue|boulevard|impasse|allée|chemin|place|route)\s[\w\s'-]+,\s?\d{5}\s[\w\s'-]+"
+    return re.findall(pattern, text, flags=re.IGNORECASE)
+
+def anonymiser_adresses(text):
+    pattern = r"\b\d{1,4}\s(rue|avenue|boulevard|impasse|allée|chemin|place|route)\s[\w\s'-]+,\s?\d{5}\s[\w\s'-]+"
+    return re.sub(pattern, "[ADRESSE]", text, flags=re.IGNORECASE)
+
+texte = "Son adresse est 17 rue Victor Hugo, 75003 Paris."
+print(anonymiser_adresses(texte))
+
+
+
+
+DS
+
+import spacy
+
+nlp = spacy.load("fr_core_news_md")
+
+def anonymize_addresses(text):
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ == "LOC":  # Les adresses sont souvent étiquetées comme LOC
+            text = text.replace(ent.text, "[ADRESSE]")
+    return text
+
+# Exemple d'utilisation
+text = "La société est située au 14 rue de la Paix, 75002 Paris."
+print(anonymize_addresses(text))
+
+from spacy.lang.fr import French
+from spacy.matcher import Matcher
+
+nlp = French()
+matcher = Matcher(np.vocab)
+
+# Modèle pour les adresses françaises
+patterns = [
+    [{"SHAPE": "dd"}, {"LOWER": "rue"}, {"LOWER": "de"}, {"IS_ALPHA": True}],
+    [{"SHAPE": "dd"}, {"LOWER": "avenue"}, {"IS_ALPHA": True}],
+    [{"SHAPE": "dd"}, {"LOWER": "boulevard"}, {"IS_ALPHA": True}],
+    [{"TEXT": {"REGEX": r"\b\d{1,3}\s*(rue|avenue|boulevard|allée|impasse)\b"}}],
+    [{"TEXT": {"REGEX": r"\b\d{5}\b"}, "OP": "+"}, {"ENT_TYPE": "LOC"}]
+]
+
+matcher.add("FR_ADDRESS", patterns)
+
+def advanced_anonymize(text):
+    doc = nlp(text)
+    matches = matcher(doc)
+
+    spans = [doc[start:end] for _, start, end in matches]
+    for span in spans:
+        text = text.replace(span.text, "[ADRESSE]")
+
+    return text
+
+import re
+import spacy
+from spacy.tokens import Span
+
+nlp = spacy.load("fr_core_news_md")
+
+# Expression régulière pour les codes postaux français
+cp_regex = r"\b(0[1-9]|[1-8][0-9]|9[0-8]|2A|2B)[0-9]{3}\b"
+
+def address_anonymizer(text):
+    doc = nlp(text)
+
+    # Détection des codes postaux
+    cp_matches = re.finditer(cp_regex, text)
+    for match in cp_matches:
+        start, end = match.span()
+        span = doc.char_span(start, end)
+        if span:
+            text = text[:start] + "[CODE_POSTAL]" + text[end:]
+
+    # Nouveau doc avec CP anonymisés
+    doc = nlp(text)
+
+    # Détection des adresses complètes
+    for ent in doc.ents:
+        if ent.label_ == "LOC" and any(t.like_num for t in ent):
+            text = text.replace(ent.text, "[ADRESSE_COMPLETE]")
+
+    return text
+
+Ajouter des motifs spécifiques
+
+patterns_add = [
+    [{"TEXT": {"REGEX": r"\b\d{1,3}\s*(bis|ter)?\s*(rue|avenue|boulevard|allée|impasse|route)\b"}}],
+    [{"TEXT": {"REGEX": r"\b(place|quai|cours)\b"}, "OP": "?"}, {"TEXT": {"REGEX": r"[A-ZÉÈÊ][a-zéèêàçî]+"}}]
+]
+
+
+__________________________
+Entrainer Spacy
+
+
+GPT
+
+TRAIN_DATA = [
+    ("J'habite au 15 rue de la République, 13001 Marseille.", {"entities": [(13, 50, "ADRESSE")]}),
+    ("Son domicile est 42 avenue Foch, 75016 Paris.", {"entities": [(18, 45, "ADRESSE")]}),
+]
+
+Utilise la CLI spaCy :
+
+python -m spacy init config config.cfg --lang fr --pipeline ner
+
+Puis crée tes fichiers d'entraînement :
+
+python -m spacy convert tes_donnees.json --output ./ --converter ner
+
+Entraîner ton modèle NER
+
+python -m spacy train config.cfg --output ./model_adresse --paths.train ./train.spacy --paths.dev ./dev.spacy
+
+Une fois entraîné :
+
+import spacy
+nlp = spacy.load("model_adresse")
+doc = nlp("J'habite 17 rue Victor Hugo, 75003 Paris.")
+for ent in doc.ents:
+    print(ent.text, ent.label_)
+
+
+Spacy-transformers / BERT (CamemBERT)
+
+Installer les packages
+
+pip install spacy spacy-transformers
+
+Créer une config avec transformer + ner
+
+python -m spacy init config config.cfg --lang fr --pipeline ner --optimize accuracy --force
+
+Ensuite, édite config.cfg pour remplacer le backbone :
+
+[components.transformer.model]
+name = "camembert-base"
+
+Préparer les données comme avant (entités = ADRESSE), puis :
+
+python -m spacy train config.cfg --output ./adresse_bert_model \
+    --paths.train ./train.spacy \
+    --paths.dev ./dev.spacy
+
+
+
+
+DS
+
+TRAIN_DATA = [
+    ("Le siège est au 14 rue de la Paix, 75002 Paris", {
+        "entities": [(17, 38, "ADDRESS"), (40, 45, "POSTAL_CODE"), (46, 51, "CITY")]
+    }),
+    ("Notre dépôt : 5 avenue des Champs-Élysées, Paris 8", {
+        "entities": [(12, 40, "ADDRESS"), (42, 47, "CITY"), (48, 49, "DISTRICT")]
+    })
+]
+
+Entraine NER personnalisé
+
+import spacy
+import random
+from spacy.training import Example
+from pathlib import Path
+
+# 1. Créer un modèle vide
+nlp = spacy.blank("fr")  # ou partir d'un modèle existant : fr_core_news_md
+ner = nlp.add_pipe("ner")
+
+# 2. Ajouter les labels
+for label in ["ADDRESS", "POSTAL_CODE", "CITY", "DISTRICT"]:
+    ner.add_label(label)
+
+# 3. Entraînement
+optimizer = nlp.begin_training()
+for i in range(30):  # 30 itérations
+    random.shuffle(TRAIN_DATA)
+    losses = {}
+    for text, annotations in TRAIN_DATA:
+        example = Example.from_dict(nlp.make_doc(text), annotations)
+        nlp.update([example], drop=0.5, losses=losses)
+    print(f"Itération {i}, Pertes : {losses}")
+
+# 4. Sauvegarder le modèle
+nlp.to_disk("/chemin/vers/modele_adresses")
+
+Utilisation de spacy-transformers
+
+pip install spacy-transformers
+python -m spacy download fr_dep_news_trf
+
+import spacy
+from spacy.tokens import Span
+
+# Charger le modèle transformeur
+nlp = spacy.load("fr_dep_news_trf")
+
+# Ajouter des règles pour améliorer la reconnaissance
+pattern = [
+    {"TEXT": {"REGEX": r"\d{1,3}"}},
+    {"LOWER": {"IN": ["rue", "avenue", "boulevard", "allée"]}},
+    {"IS_ALPHA": True, "OP": "+"}
+]
+
+ruler = nlp.add_pipe("entity_ruler", before="ner")
+ruler.add_patterns([{"label": "ADDRESS", "pattern": pattern}])
+
+# Fonction d'anonymisation
+def detect_addresses(text):
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ in ["ADDRESS", "LOC"] and any(t.is_digit for t in ent):
+            print(f"Adresse détectée : {ent.text}")
+    return doc
+
+# Exemple
+text = "Nos bureaux sont au 25 rue du Faubourg Saint-Honoré, 75008 Paris"
+doc = detect_addresses(text)
+
+Règles hybrides
+
+from spacy.language import Language
+
+@Language.component("address_enhancer")
+def address_enhancer(doc):
+    # Détection des codes postaux
+    for match in re.finditer(r"\b(0[1-9]|[1-8][0-9]|9[0-8]|2A|2B)[0-9]{3}\b", doc.text):
+        start, end = match.span()
+        span = doc.char_span(start, end)
+        if span:
+            # Étendre aux mots environnants
+            start = max(0, span.start - 5)
+            end = min(len(doc), span.end + 3)
+            new_span = Span(doc, start, end, label="ADDRESS")
+            doc.ents = list(doc.ents) + [new_span]
+    return doc
+
+# Ajouter au pipeline
+nlp.add_pipe("address_enhancer", after="ner")
+
+
+Evaluation du modèle
+
+from spacy.scorer import Scorer
+from spacy.training import Example
+
+def evaluate_model(nlp, examples):
+    scorer = Scorer()
+    for text, annot in examples:
+        doc = nlp(text)
+        example = Example.from_dict(doc, annot)
+        scorer.score(example)
+    return scorer.scores
+
+results = evaluate_model(nlp, EVAL_DATA)
+print(results["ents_per_type"])  # Précision par type d'entité
+
+Exemple complet avec spacy-transformers
+
+import spacy
+from spacy_transformers import TransformerModel
+
+# 1. Charger un modèle transformeur français
+nlp = spacy.load("fr_dep_news_trf")
+
+# 2. Ajouter un NER personnalisé
+config = {
+    "model": {
+        "@architectures": "spacy-transformers.TransformerModel.v1",
+        "name": "camembert-base",
+        "tokenizer_config": {"use_fast": True}
+    }
+}
+transformer = nlp.add_pipe("transformer", config=config)
+
+# 3. Ajouter le NER
+ner = nlp.add_pipe("ner", after="transformer")
+ner.add_label("ADDRESS")
+
+# 4. Entraînement (avec beaucoup plus de données)
+optimizer = nlp.initialize()
+for epoch in range(10):
+    losses = {}
+    for text, annotations in TRAIN_DATA:
+        doc = nlp.make_doc(text)
+        example = Example.from_dict(doc, annotations)
+        nlp.update([example], losses=losses)
+    print(f"Epoch {epoch}, Losses: {losses}")
+
+# 5. Sauvegarde
+nlp.to_disk("./french_address_recognizer")
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,191 @@
+GPT
+
+=B1="Urgent"
+=ISNUMBER(SEARCH("Urgent", B1))
+=B1<>""
+=B1="Oui"
+=B1>100
+
+
+DS
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Not Intersect(Target, Range("A1:A100")) Is Nothing Then
+        Dim cell As Range
+        For Each cell In Target
+            If cell.Value <> "" Then
+                cell.Offset(0, 1).Interior.Color = RGB(146, 208, 80) 'Vert
+            Else
+                cell.Offset(0, 1).Interior.ColorIndex = xlNone
+            End If
+        Next cell
+    End If
+End Sub
+
+
+_________________________________
+
+Comment faire une mise en forme conditionnelle dans Excel sur la cellule A1 qui contient une date avec les conditions :
+- la cellule A1 devient en rouge si la date dans la cellule A1 est à moins de 2 jours de la date du jour et si la celulle A2 est vide
+- la cellule A1 devient verte si la cellule A2 n'est pas vide
+- la cellule A1 devient grise si la date dans la cellule A1 est à plus de 2 jours de la date d'aujourd'hui.
+
+
+GPT
+
+
+=ET(A1<>""; A1-AUJOURDHUI()<=2; A2="")
+et appliquer une couleur rouge (remplissage)
+Coche éventuellement "Arrêter si vrai" si tu veux que ça prenne le dessus.
+
+=A2<>""
+Appliquer une couleur verte
+
+=ET(A1<>""; A1-AUJOURDHUI()>2)
+Appliquer une couleur grise
+
+ssure-toi de décocher "Arrêter si vrai" sauf peut-être pour la rouge si tu veux qu’elle prenne la priorité.
+
+
+
+
+
+
+DS
+
+Configuration pas à pas :
+Sélectionnez la cellule A1
+
+Allez dans : Accueil → Mise en forme conditionnelle → Gérer les règles → Nouvelle règle
+
+Règle 1 (Priorité 1) : Vert si A2 n'est pas vide
+Type : "Utiliser une formule pour déterminer..."
+
+Formule : =A2<>""
+
+Format : Remplissage vert
+
+Appliquer à : =$A$1
+
+Règle 2 (Priorité 2) : Rouge si date ≤ 2 jours ET A2 vide
+Type : "Utiliser une formule pour déterminer..."
+
+Formule : =ET(A1-AUJOURDHUI()<=2;A2="")
+
+Format : Remplissage rouge
+
+Appliquer à : =$A$1
+
+Règle 3 (Priorité 3) : Gris si date > 2 jours
+Type : "Utiliser une formule pour déterminer..."
+
+Formule : =A1-AUJOURDHUI()>2
+
+Format : Remplissage gris
+
+Appliquer à : =$A$1
+
+Points importants :
+L'ordre des règles est crucial :
+
+La règle verte en premier (priorité haute)
+
+Puis la règle rouge
+
+Enfin la règle grise
+
+Vérifiez que :
+
+A1 contient bien une date valide
+
+Les séparateurs dans les formules sont des points-virgules (;) si votre Excel est en français
+
+Pour appliquer à toute une colonne (A1:A100 par exemple) :
+
+Modifiez "Appliquer à" pour chaque règle : =$A$1:$A$100
+
+Utilisez des références relatives dans les formules (A1 et A2 sans $)
+
+
+_____________________________
+
+j'aimerais que tu m'explique comment appliquer ça à toutes les lignes d’un tableau (ex: A2 dépend de B2, A3 de B3, etc.)
+Et peux-tu m'expliquer comment appliquer une couleur suite à une formule dans une cellule ?
+
+
+
+
+GPT
+
+
+Tu veux par exemple appliquer la logique :
+
+A2 est colorée en fonction de sa propre valeur
+
+ET de la valeur de B2
+
+Puis A3 dépend de B3, etc.
+
+Sélectionne tout le bloc de cellules A2:A100 (ou plus selon ton tableau)
+
+Va dans Accueil > Mise en forme conditionnelle > Nouvelle règle
+
+Choisis "Utiliser une formule pour déterminer pour quelles cellules le format sera appliqué"
+
+Entre la formule suivante :
+
+=ET(A2<>""; A2-AUJOURDHUI()<=2; B2="")
+
+Clique sur Format, choisis une couleur rouge.
+
+Clique sur OK.
+
+
+_________________________________
+
+Avec du VBA
+
+GPT
+
+Sub ColorerDates()
+    Dim i As Long
+    Dim lastRow As Long
+    Dim ws As Worksheet
+    Dim dateCell As Range
+    Dim commentaireCell As Range
+
+    Set ws = ActiveSheet
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+    For i = 2 To lastRow ' Commence à la ligne 2
+        Set dateCell = ws.Cells(i, 1)  ' Colonne A
+        Set commentaireCell = ws.Cells(i, 2)  ' Colonne B
+
+        ' Réinitialiser la couleur
+        dateCell.Interior.ColorIndex = xlNone
+
+        If IsDate(dateCell.Value) Then
+            If dateCell.Value - Date <= 2 And commentaireCell.Value = "" Then
+                ' 🔴 Moins de 2 jours et B vide
+                dateCell.Interior.Color = RGB(255, 199, 206) ' Rouge clair
+            ElseIf commentaireCell.Value <> "" Then
+                ' ✅ B non vide
+                dateCell.Interior.Color = RGB(198, 239, 206) ' Vert clair
+            ElseIf dateCell.Value - Date > 2 Then
+                ' ⚪ Plus de 2 jours
+                dateCell.Interior.Color = RGB(217, 217, 217) ' Gris clair
+            End If
+        End If
+    Next i
+End Sub
+
+
+
+
+
+
+
+
+
+
+

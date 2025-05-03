@@ -1,0 +1,268 @@
+https://www.automateexcel.com/online-vba-code-generator/
+
+
+
+
+GPT
+
+
+Sub ExtraireToutesLesCles()
+
+    Dim ListeDict As Collection
+    Dim dict1 As Object, dict2 As Object
+    Dim toutesLesCles As Collection
+    Dim cles As Variant
+    Dim d As Object
+    Dim k As Variant
+
+    ' Initialisation
+    Set ListeDict = New Collection
+    Set toutesLesCles = New Collection
+
+    ' Création des dictionnaires
+    Set dict1 = CreateObject("Scripting.Dictionary")
+    dict1.Add "Nom", "Alice"
+    dict1.Add "Ville", "Paris"
+
+    Set dict2 = CreateObject("Scripting.Dictionary")
+    dict2.Add "Nom", "Bob"
+    dict2.Add "Pays", "France"
+
+    ' Ajout à la liste
+    ListeDict.Add dict1
+    ListeDict.Add dict2
+
+    ' Extraction des clés
+    For Each d In ListeDict
+        For Each k In d.Keys
+            toutesLesCles.Add k
+        Next k
+    Next d
+
+    ' Affichage des résultats
+    For Each k In toutesLesCles
+        Debug.Print k
+    Next k
+
+End Sub
+
+Pour éviter les doublons dans la liste de clés : utiliser un dico
+et dico.Add key, True
+(True car léger)
+
+________________________________________
+
+DS
+
+
+
+Function GetUniqueKeysFromDictionaries(dictArray() As Object) As Collection
+    Dim result As New Collection
+    Dim dict As Object
+    Dim key As Variant
+    Dim i As Integer
+
+    On Error Resume Next  ' Pour gérer les doublons
+
+    ' Parcourir tous les dictionnaires du tableau
+    For i = LBound(dictArray) To UBound(dictArray)
+        Set dict = dictArray(i)
+
+        ' Ajouter chaque clé à la collection
+        For Each key In dict.Keys
+            result.Add key, CStr(key)  ' Le deuxième paramètre évite les doublons
+        Next key
+    Next i
+
+    On Error GoTo 0
+
+    Set GetUniqueKeysFromDictionaries = result
+End Function
+
+
+
+Function GetAllUniqueKeys(dictArray() As Object) As Object
+    Dim combinedDict As Object
+    Set combinedDict = CreateObject("Scripting.Dictionary")
+    Dim dict As Object
+    Dim key As Variant
+    Dim i As Integer
+
+    ' Parcourir tous les dictionnaires
+    For i = LBound(dictArray) To UBound(dictArray)
+        Set dict = dictArray(i)
+
+        ' Ajouter toutes les clés au dictionnaire combiné
+        For Each key In dict.Keys
+            combinedDict(key) = 1  ' La valeur n'a pas d'importance
+        Next key
+    Next i
+
+    Set GetAllUniqueKeys = combinedDict
+End Function
+
+
+
+Sub TestDictionaryKeys()
+    Dim dict1 As Object, dict2 As Object, dict3 As Object
+    Set dict1 = CreateObject("Scripting.Dictionary")
+    Set dict2 = CreateObject("Scripting.Dictionary")
+    Set dict3 = CreateObject("Scripting.Dictionary")
+
+    ' Remplir les dictionnaires avec des données d'exemple
+    dict1.Add "Nom", "Valeur1"
+    dict1.Add "Prénom", "Valeur2"
+
+    dict2.Add "Age", 30
+    dict2.Add "Ville", "Paris"
+
+    dict3.Add "Nom", "AutreValeur"
+    dict3.Add "Pays", "France"
+
+    ' Créer un tableau des dictionnaires
+    Dim dictArray(0 To 2) As Object
+    Set dictArray(0) = dict1
+    Set dictArray(1) = dict2
+    Set dictArray(2) = dict3
+
+    ' Méthode 1 : Obtenir les clés uniques dans une collection
+    Dim uniqueKeys As Collection
+    Set uniqueKeys = GetUniqueKeysFromDictionaries(dictArray)
+
+    ' Afficher les résultats
+    Dim item As Variant
+    Debug.Print "Clés uniques (" & uniqueKeys.Count & "):"
+    For Each item In uniqueKeys
+        Debug.Print item
+    Next
+
+    ' Méthode 2 : Utiliser un dictionnaire pour les clés uniques
+    Dim keyDict As Object
+    Set keyDict = GetAllUniqueKeys(dictArray)
+
+    Debug.Print vbCrLf & "Clés via Dictionary (" & keyDict.Count & "):"
+    For Each item In keyDict.Keys
+        Debug.Print item
+    Next
+End Sub
+
+
+
+________________________________________
+
+
+Sub GatherKeys()
+Dim Dict1 As Object
+Set Dict1 = CreateObject("Scripting.Dictionary")
+
+Dict1.Add 1, "Value1"
+Dict1.Add 2, "Value2"
+Dict1.Add 3, "Value3"
+
+Dim Dict2 As Object
+Set Dict2 = CreateObject("Scripting.Dictionary")
+
+Dict2.Add 4, "Value4"
+Dict2.Add 5, "Value5"
+Dict2.Add 6, "Value6"
+
+Dim Dict3 As Object
+Set Dict3 = CreateObject("Scripting.Dictionary")
+
+Dict3.Add 7, "Value7"
+Dict3.Add 8, "Value8"
+Dict3.Add 9, "Value9"
+
+Dim KeysList As Object
+Set KeysList = CreateObject("Scripting.Dictionary")
+
+Dim key
+For Each key In Dict1.Keys
+    KeysList(key) = Empty
+Next key
+
+For Each key In Dict2.Keys
+    If Not KeysList.Exists(key) Then
+        KeysList(key) = Empty
+    End If
+Next key
+
+For Each key In Dict3.Keys
+    If Not KeysList.Exists(key) Then
+        KeysList(key) = Empty
+    End If
+Next key
+
+Dim output As String
+output = ""
+
+For Each key In KeysList.Keys
+    output = output & key & ", "
+Next key
+
+output = Left(output, Len(output) - 2)
+
+MsgBox output
+
+End Sub
+
+
+
+________________________________________
+
+Automateexcel
+
+
+Sub GatherKeys()
+    Dim Dict1 As New Scripting.Dictionary
+    Dim Dict2 As New Scripting.Dictionary
+    Dim Dict3 As New Scripting.Dictionary
+    Dim KeysArray As Variant
+    Dim UniqueKeys As New Scripting.Dictionary
+    Dim KeyItem As Variant
+
+    ' Populate dictionaries Dict1, Dict2, Dict3 with keys and items
+    ' Assuming keys in dictionaries are unique
+
+    ' Loop through Dict1 keys
+    For Each KeyItem In Dict1.Keys
+        If Not UniqueKeys.Exists(KeyItem) Then
+            UniqueKeys.Add KeyItem, KeyItem  ' Add the key to UniqueKeys
+        End If
+    Next KeyItem
+
+    ' Loop through Dict2 keys
+    For Each KeyItem In Dict2.Keys
+        If Not UniqueKeys.Exists(KeyItem) Then
+            UniqueKeys.Add KeyItem, KeyItem  ' Add the key to UniqueKeys
+        End If
+    Next KeyItem
+
+    ' Loop through Dict3 keys
+    For Each KeyItem In Dict3.Keys
+        If Not UniqueKeys.Exists(KeyItem) Then
+            UniqueKeys.Add KeyItem, KeyItem  ' Add the key to UniqueKeys
+        End If
+    Next KeyItem
+
+    ' Convert UniqueKeys to an array
+    KeysArray = UniqueKeys.Keys
+
+    ' Output the array of unique keys
+    For i = LBound(KeysArray) To UBound(KeysArray)
+        Debug.Print KeysArray(i)
+    Next i
+
+End Sub
+
+________________________________________
+
+
+
+
+
+
+
+
+
+

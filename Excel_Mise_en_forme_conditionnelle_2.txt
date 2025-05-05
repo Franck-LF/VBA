@@ -1,0 +1,88 @@
+Mise en forme conditionnelle
+
+
+GPT
+
+Bonjour ! Voici comment faire pour colorer en vert les cellules contenant une date à moins de 2 jours d’aujourd’hui dans Excel, en utilisant la **mise en forme conditionnelle** :
+
+---
+
+### ✅ Étapes à suivre :
+
+1. **Sélectionnez** la plage de cellules contenant les dates.
+
+2. Allez dans **Accueil** > **Mise en forme conditionnelle** > **Nouvelle règle**.
+
+3. Dans la fenêtre qui s’ouvre :
+
+   * Choisissez **"Utiliser une formule pour déterminer pour quelles cellules le format sera appliqué"**.
+
+4. Entrez la formule suivante :
+
+   ```excel
+   =ET(A1<>""; A1-AUJOURDHUI()<=2; A1-AUJOURDHUI()>=0)
+   ```
+
+   ⚠️ Remplacez `A1` par la première cellule de votre sélection (par exemple `B2` si vous avez sélectionné à partir de B2).
+
+5. Cliquez sur **Format**, puis choisissez un **remplissage vert**, puis cliquez sur **OK**.
+
+6. Cliquez sur **OK** encore pour valider la règle.
+
+---
+
+### 🧠 Explication :
+
+* `A1-AUJOURDHUI()` calcule la différence entre la date de la cellule et aujourd’hui.
+* On vérifie qu’elle est **entre 0 et 2 jours** (inclus).
+* `A1<>""` empêche la mise en forme des cellules vides.
+
+Souhaitez-vous aussi que les cellules avec une date **dépassée** soient colorées en rouge, ou c’est seulement pour les 2 jours à venir ?
+
+
+
+_______________________
+DS
+
+
+
+Pour colorer automatiquement les cellules contenant une date à moins de 2 jours de la date du jour dans Excel, suivez ces étapes :
+
+---
+
+### **Méthode avec la Mise en forme conditionnelle**
+1. **Sélectionnez vos cellules de dates** (ex : A1:A10).
+2. Allez dans l'onglet **Accueil** → **Mise en forme conditionnelle** → **Nouvelle règle**.
+3. Choisissez **"Utiliser une formule pour déterminer les cellules à formater"**.
+4. Dans la zone de formule, insérez :
+   ```excel
+   =ET(A1 >= AUJOURDHUI() - 2; A1 <= AUJOURDHUI() + 2)
+   ```
+   *Remplacez `A1` par la première cellule de votre plage sélectionnée.*
+5. Cliquez sur **Format** → choisissez une couleur verte → **OK** → **OK**.
+
+---
+
+### **Explications**
+- **AUJOURDHUI()** donne la date actuelle.
+- **A1 >= AUJOURDHUI() - 2** : dates supérieures ou égales à il y a 2 jours.
+- **A1 <= AUJOURDHUI() + 2** : dates inférieures ou égales à dans 2 jours.
+- Les cellules seront vertes si elles sont dans cet intervalle.
+
+---
+
+### **Alternative avec différence absolue**
+Pour une formule plus concise :
+```excel
+=ABS(A1 - AUJOURDHUI()) <= 2
+```
+
+---
+
+**Note :** Assurez-vous que vos dates sont bien au format *Date Excel* (et non du texte).
+
+________________________
+
+
+
+

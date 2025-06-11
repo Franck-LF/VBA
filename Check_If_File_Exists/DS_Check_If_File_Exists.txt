@@ -1,0 +1,61 @@
+
+Sub VerifierFichierEtFeuille()
+    Dim xlApp As Object
+    Dim xlWb As Object
+    Dim xlSheet As Object
+    Dim cheminFichier As String
+    Dim fichierExiste As Boolean
+    Dim feuilleExiste As Boolean
+    Dim i As Integer
+    
+    ' Chemin complet vers le fichier (à adapter)
+    cheminFichier = Environ("USERPROFILE") & "\Desktop\synthese.xlsx"
+    
+    On Error Resume Next ' Gestion des erreurs
+    
+    ' Vérifier si le fichier existe
+    If Dir(cheminFichier) <> "" Then
+        fichierExiste = True
+    Else
+        fichierExiste = False
+    End If
+    
+    ' Créer ou ouvrir le fichier Excel
+    Set xlApp = CreateObject("Excel.Application")
+    
+    If fichierExiste Then
+        Set xlWb = xlApp.Workbooks.Open(cheminFichier)
+    Else
+        Set xlWb = xlApp.Workbooks.Add
+        xlWb.SaveAs cheminFichier
+    End If
+    
+    ' Vérifier existence feuille
+    feuilleExiste = False
+    For i = 1 To xlWb.Sheets.Count
+        If LCase(xlWb.Sheets(i).Name) = "feuille16" Then
+            feuilleExiste = True
+            Exit For
+        End If
+    Next i
+    
+    ' Créer la feuille si absente
+    If Not feuilleExiste Then
+        Set xlSheet = xlWb.Sheets.Add(After:=xlWb.Sheets(xlWb.Sheets.Count))
+        xlSheet.Name = "feuille16"
+    End If
+    
+    ' Sauvegarder et fermer
+    xlApp.DisplayAlerts = False ' Désactiver les alertes
+    xlWb.Save
+    xlWb.Close
+    xlApp.Quit
+    
+    ' Nettoyage
+    Set xlSheet = Nothing
+    Set xlWb = Nothing
+    Set xlApp = Nothing
+    
+    MsgBox "Opération terminée avec succès!", vbInformation
+End Sub
+

@@ -1,0 +1,61 @@
+Sub VerifierOuCreerFichierEtFeuille()
+    Dim xlApp As Object
+    Dim wb As Object
+    Dim ws As Object
+    Dim cheminFichier As String
+    Dim feuilleExiste As Boolean
+    
+    ' Définir le chemin complet du fichier
+    cheminFichier = "C:\Users\VotreNom\Documents\synthese.xlsx" ' 🔁 À adapter
+    
+    ' Créer une instance d'Excel
+    On Error Resume Next
+    Set xlApp = GetObject(, "Excel.Application")
+    If xlApp Is Nothing Then Set xlApp = CreateObject("Excel.Application")
+    On Error GoTo 0
+    
+    xlApp.Visible = False
+    
+    ' Vérifier si le fichier existe
+    If Dir(cheminFichier) = "" Then
+        ' Le fichier n'existe pas, on le crée
+        Set wb = xlApp.Workbooks.Add
+        Set ws = wb.Sheets(1)
+        ws.Name = "feuille16"
+        wb.SaveAs cheminFichier
+    Else
+        ' Le fichier existe, on l'ouvre
+        Set wb = xlApp.Workbooks.Open(cheminFichier)
+        
+        ' Vérifier si la feuille "feuille16" existe
+        feuilleExiste = False
+        For Each ws In wb.Sheets
+            If LCase(ws.Name) = "feuille16" Then
+                feuilleExiste = True
+                Exit For
+            End If
+        Next
+        
+        ' Si elle n'existe pas, la créer
+        If Not feuilleExiste Then
+            Set ws = wb.Sheets.Add(After:=wb.Sheets(wb.Sheets.Count))
+            ws.Name = "feuille16"
+        End If
+    End If
+    
+    ' Sauvegarder et fermer
+    wb.Save
+    wb.Close
+    xlApp.Quit
+    
+    ' Libérer la mémoire
+    Set ws = Nothing
+    Set wb = Nothing
+    Set xlApp = Nothing
+End Sub
+
+Le code fonctionne même depuis Outlook si les références Excel ne sont pas activées, car on utilise CreateObject.
+
+Tu peux ajuster les options pour rendre Excel visible (xlApp.Visible = True) si tu veux voir ce qui se passe.
+
+______________________________________

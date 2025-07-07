@@ -1,0 +1,125 @@
+### Solution VBA pour fusionner 3 dictionnaires dans un tableau Excel
+
+Voici un code VBA qui permet de :
+1. Récupérer toutes les clés uniques des 3 dictionnaires
+2. Créer un tableau avec 4 colonnes (clés + valeurs des 3 dictionnaires)
+3. Compléter par des `0` quand une clé est manquante dans un dictionnaire
+
+```vba
+Sub FusionnerDictionnairesEnTableau()
+    Dim dict1 As Object, dict2 As Object, dict3 As Object
+    Dim ws As Worksheet
+    Dim outputRange As Range
+    Dim allKeys As Object
+    Dim key As Variant
+    Dim i As Long
+    Dim resultArray() As Variant
+    
+    ' Initialisation des dictionnaires (à remplacer par vos vrais dictionnaires)
+    Set dict1 = CreateObject("Scripting.Dictionary")
+    Set dict2 = CreateObject("Scripting.Dictionary")
+    Set dict3 = CreateObject("Scripting.Dictionary")
+    
+    ' Exemple de données (à supprimer dans votre code réel)
+    dict1("A") = 10
+    dict1("B") = 20
+    dict1("C") = 30
+    
+    dict2("A") = 15
+    dict2("C") = 35
+    dict2("D") = 45
+    
+    dict3("B") = 25
+    dict3("C") = 35
+    dict3("E") = 55
+    
+    ' Créer un dictionnaire pour toutes les clés uniques
+    Set allKeys = CreateObject("Scripting.Dictionary")
+    
+    ' Ajouter les clés de tous les dictionnaires
+    For Each key In dict1.Keys
+        allKeys(key) = 1
+    Next key
+    
+    For Each key In dict2.Keys
+        allKeys(key) = 1
+    Next key
+    
+    For Each key In dict3.Keys
+        allKeys(key) = 1
+    Next key
+    
+    ' Préparer le tableau de résultats
+    ReDim resultArray(1 To allKeys.Count, 1 To 4)
+    
+    ' Remplir le tableau
+    i = 1
+    For Each key In allKeys.Keys
+        resultArray(i, 1) = key ' Colonne 1 = clé
+        
+        ' Colonne 2 = valeur dict1 (ou 0 si absent)
+        If dict1.Exists(key) Then
+            resultArray(i, 2) = dict1(key)
+        Else
+            resultArray(i, 2) = 0
+        End If
+        
+        ' Colonne 3 = valeur dict2 (ou 0 si absent)
+        If dict2.Exists(key) Then
+            resultArray(i, 3) = dict2(key)
+        Else
+            resultArray(i, 3) = 0
+        End If
+        
+        ' Colonne 4 = valeur dict3 (ou 0 si absent)
+        If dict3.Exists(key) Then
+            resultArray(i, 4) = dict3(key)
+        Else
+            resultArray(i, 4) = 0
+        End If
+        
+        i = i + 1
+    Next key
+    
+    ' Écrire les résultats dans Excel
+    Set ws = ThisWorkbook.Sheets("Feuil1") ' Modifier selon votre feuille
+    Set outputRange = ws.Range("A1").Resize(allKeys.Count, 4)
+    
+    outputRange.Value = resultArray
+    
+    ' Ajouter des en-têtes si nécessaire
+    ws.Range("A1:D1").Value = Array("Clé", "Dict1", "Dict2", "Dict3")
+    
+    MsgBox "Tableau généré avec " & allKeys.Count & " lignes", vbInformation
+End Sub
+```
+
+### Points clés à adapter :
+1. **Remplacez `dict1`, `dict2`, `dict3`** par vos propres dictionnaires
+2. **Modifiez la feuille de sortie** (`"Feuil1"`) selon votre besoin
+3. **Changez la plage de sortie** (`"A1"`) si nécessaire
+
+### Fonctionnement :
+1. **Collecte des clés** : Toutes les clés uniques des 3 dictionnaires sont récupérées
+2. **Création du tableau** : 
+   - Colonne A : les clés
+   - Colonnes B-D : valeurs des dictionnaires (avec `0` pour les clés manquantes)
+3. **Tri des clés** : Par défaut, l'ordre est celui de l'ajout dans `allKeys`. Pour trier alphabétiquement, ajoutez :
+   ```vba
+   ' Tri des clés (optionnel)
+   Dim sortedKeys As Variant
+   sortedKeys = allKeys.Keys
+   ' Tri avec un algorithme de votre choix (ex: QuickSort)
+   ```
+
+### Version optimisée (pour grands datasets) :
+Si vous avez beaucoup de données, utilisez cette approche plus rapide :
+```vba
+' Après avoir rempli allKeys...
+sortedKeys = allKeys.Keys
+Call QuickSort(sortedKeys, LBound(sortedKeys), UBound(sortedKeys)) ' Implémentez QuickSort
+
+' Puis parcourez sortedKeys au lieu de allKeys.Keys dans la boucle For Each
+```
+
+Cette solution gère parfaitement les clés manquantes dans certains dictionnaires et produit un tableau clair dans Excel.
